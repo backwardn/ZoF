@@ -76,8 +76,13 @@ function checkmount # dataset option
 {
 	typeset dataset="$1"
 	typeset option="$2"
+	typeset options=""
 
-	options="$(awk -v ds="$dataset" '$1 == ds { print $4 }' /proc/mounts)"
+	if is_freebsd; then
+		options=$(mount -p | awk -v ds="$dataset" '$1 == ds { print $4 }')
+	else
+		options=$(awk -v ds="$dataset" '$1 == ds { print $4 }' /proc/mounts)
+	fi
 	if [[ "$options" == '' ]]; then
 		log_fail "Dataset $dataset is not mounted"
 	elif [[ ! -z "${options##*$option*}" ]]; then
@@ -105,10 +110,18 @@ log_must mkdir -p $MNTPSNAP
 # 2. Verify we can (re)mount the dataset readonly/read-write
 log_must touch $MNTPFS/file.dat
 checkmount $TESTFS 'rw'
-log_must mount -o remount,ro $TESTFS $MNTPFS
+if is_freebsd; then
+	log_must mount -ur $TESTFS $MNTPFS
+else
+	log_must mount -o remount,ro $TESTFS $MNTPFS
+fi
 readonlyfs $MNTPFS
 checkmount $TESTFS 'ro'
-log_must mount -o remount,rw $TESTFS $MNTPFS
+if is_freebsd; then
+	log_must mount -uw $TESTFS $MNTPFS
+else
+	log_must mount -o remount,rw $TESTFS $MNTPFS
+fi
 log_must touch $MNTPFS/file.dat
 checkmount $TESTFS 'rw'
 
@@ -116,7 +129,11 @@ checkmount $TESTFS 'rw'
 log_must mount -t zfs $TESTSNAP $MNTPSNAP
 readonlyfs $MNTPSNAP
 checkmount $TESTSNAP 'ro'
-log_must mount -o remount,ro $TESTSNAP $MNTPSNAP
+if is_freebsd; then
+	log_must mount -ur $TESTSNAP $MNTPSNAP
+else
+	log_must mount -o remount,ro $TESTSNAP $MNTPSNAP
+fi
 readonlyfs $MNTPSNAP
 checkmount $TESTSNAP 'ro'
 log_must umount $MNTPSNAP
@@ -127,7 +144,11 @@ log_must umount $MNTPSNAP
 log_must mount -t zfs -o rw $TESTSNAP $MNTPSNAP
 readonlyfs $MNTPSNAP
 checkmount $TESTSNAP 'ro'
-log_mustnot mount -o remount,rw $TESTSNAP $MNTPSNAP
+if is_freebsd; then
+	log_mustnot mount -uw $TESTSNAP $MNTPSNAP
+else
+	log_mustnot mount -o remount,rw $TESTSNAP $MNTPSNAP
+fi
 readonlyfs $MNTPSNAP
 checkmount $TESTSNAP 'ro'
 log_must umount $MNTPSNAP
@@ -138,7 +159,11 @@ log_must eval "echo 'password' | zfs create -o sync=disabled \
     -o encryption=on -o keyformat=passphrase $TESTFS/crypt"
 CRYPT_MNTPFS="$(get_prop mountpoint $TESTFS/crypt)"
 log_must touch $CRYPT_MNTPFS/file.dat
-log_must mount -o remount,ro $TESTFS/crypt $CRYPT_MNTPFS
+if is_freebsd; then
+	log_must mount -ur $TESTFS/crypt $CRYPT_MNTPFS
+else
+	log_must mount -o remount,ro $TESTFS/crypt $CRYPT_MNTPFS
+fi
 log_must umount -f $CRYPT_MNTPFS
 zpool sync $TESTPOOL
 
@@ -149,7 +174,11 @@ log_must zpool import -o readonly=on $TESTPOOL
 # 7. Verify we can't remount its filesystem read-write
 readonlyfs $MNTPFS
 checkmount $TESTFS 'ro'
-log_mustnot mount -o remount,rw $MNTPFS
+if is_freebsd; then
+	log_mustnot mount -uw $MNTPFS
+else
+	log_mustnot mount -o remount,rw $MNTPFS
+fi
 readonlyfs $MNTPFS
 checkmount $TESTFS 'ro'
 

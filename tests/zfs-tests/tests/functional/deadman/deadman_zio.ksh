@@ -42,13 +42,16 @@
 . $STF_SUITE/include/libtest.shlib
 . $STF_SUITE/tests/functional/deadman/deadman.cfg
 
+if is_freebsd; then
+	log_unsupported "Events not supported on FreeBSD"
+fi
+
 verify_runnable "both"
 
 function cleanup
 {
 	log_must zinject -c all
 	default_cleanup_noexit
-
 	log_must set_tunable64 zfs_deadman_ziotime_ms $ZIOTIME_DEFAULT
 	log_must set_tunable64 zfs_deadman_checktime_ms $CHECKTIME_DEFAULT
 	log_must set_tunable64 zfs_deadman_failmode $FAILMODE_DEFAULT

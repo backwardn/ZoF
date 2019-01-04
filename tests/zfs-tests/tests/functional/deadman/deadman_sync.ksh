@@ -39,6 +39,10 @@
 . $STF_SUITE/include/libtest.shlib
 . $STF_SUITE/tests/functional/deadman/deadman.cfg
 
+if is_freebsd; then
+	log_unsupported "Events not supported in FreeBSD"
+fi
+
 verify_runnable "both"
 
 function cleanup

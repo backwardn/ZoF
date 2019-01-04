@@ -41,12 +41,13 @@ extern void zvol_rename_minors(spa_t *spa, const char *oldname,
     const char *newname, boolean_t async);
 
 #ifdef _KERNEL
+#ifndef	_SYS_ZVOL_IMPL_H
 typedef struct zvol_state zvol_state_t;
+#endif
 
 extern int zvol_check_volsize(uint64_t volsize, uint64_t blocksize);
 extern int zvol_check_volblocksize(const char *name, uint64_t volblocksize);
 extern int zvol_get_stats(objset_t *os, nvlist_t *nv);
-extern boolean_t zvol_is_zvol(const char *);
 extern void zvol_create_cb(objset_t *os, void *arg, cred_t *cr, dmu_tx_t *tx);
 extern int zvol_set_volsize(const char *, uint64_t);
 extern int zvol_set_volblocksize(const char *, uint64_t);
@@ -58,5 +59,12 @@ extern void *zvol_tag(zvol_state_t *);
 
 extern int zvol_init(void);
 extern void zvol_fini(void);
+extern int zvol_busy(void);
+
+/*
+ * Platform dependent
+ */
+extern boolean_t zvol_is_zvol(const char *);
+
 #endif /* _KERNEL */
 #endif /* _SYS_ZVOL_H */

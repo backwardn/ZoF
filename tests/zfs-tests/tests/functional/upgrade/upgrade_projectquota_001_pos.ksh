@@ -42,6 +42,10 @@
 
 verify_runnable "global"
 
+if is_freebsd; then
+	log_unsupported "lsattr not supported on FreeBSD"
+fi
+
 if ! lsattr -pd > /dev/null 2>&1; then
 	log_unsupported "Current lsattr does not support set/show project ID"
 fi
